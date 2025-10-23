@@ -1,0 +1,5 @@
+# Computer Vision Libraries
+opencv-python>=4.8.0
+
+# Game Development
+pygame>=2.5.0
