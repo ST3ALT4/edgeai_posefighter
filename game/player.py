@@ -4,6 +4,21 @@ import time
 MAX_HEALTH = 10
 BLOCK_REDUCTION = 0.5
 ATTACK_COOLDOWN = 1.0
+COMBO_WINDOW = 2.0
+
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
+ORANGE = (255, 165, 0)
+PLAYER_COLORS = [(0, 255, 0), (255, 0, 0)]
+
+MOVE_DAMAGE = {
+    'punch': 5,
+    'kick': 8,
+    'kamehameha': 12,
+}
+
 class Player:
     """Fighting game player character"""
     
