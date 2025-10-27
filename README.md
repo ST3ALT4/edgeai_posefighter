@@ -9,32 +9,8 @@ pip install pygame opencv-python numpy
 
 ### 2. Create Project Structure
 ```bash
-# Create directories
-mkdir -p pose_fighters_team2/{game,entities,combat,visuals,ui,communication}
-
-# Create __init__.py files
-cd pose_fighters_team2
-touch game/__init__.py entities/__init__.py combat/__init__.py visuals/__init__.py ui/__init__.py communication/__init__.py
+git clone <whaterver the repo name is>
 ```
-
-### 3. Copy Code Files
-Extract the provided code files into the following structure:
-- `main.py` (root)
-- `config.py` (root)
-- `game/game_engine.py`
-- `game/states.py`
-- `entities/player.py`
-- `entities/health_bar.py`
-- `combat/attack_system.py`
-- `combat/hitbox.py`
-- `combat/damage_calculator.py`
-- `visuals/particle_effects.py`
-- `visuals/sprite_manager.py`
-- `visuals/animations.py`
-- `ui/hud.py`
-- `ui/menu.py`
-- `communication/pose_receiver.py`
-
 ### 4. Run
 ```bash
 python main.py
