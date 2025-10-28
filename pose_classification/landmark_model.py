@@ -5,7 +5,7 @@ Much faster than ResNet, works for any person!
 
 import torch
 import torch.nn as nn
-from landmark_config import *
+from .landmark_config import *
 
 
 class LandmarkMLP(nn.Module):

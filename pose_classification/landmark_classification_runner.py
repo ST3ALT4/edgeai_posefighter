@@ -6,8 +6,8 @@ Runs in separate process
 from multiprocessing import Process, Queue
 import time
 
-from landmark_classifier import LandmarkClassifier
-from landmark_config import *
+from .landmark_classifier import LandmarkClassifier
+from .landmark_config import *
 
 
 class LandmarkClassificationRunner:

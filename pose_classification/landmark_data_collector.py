@@ -10,8 +10,8 @@ from datetime import datetime
 from multiprocessing import Queue
 
 from pose_detection.pose_detector import PoseDetectionSystem
-from landmark_features import LandmarkFeatureExtractor
-from landmark_config import CLASS_NAMES, DATA_DIR
+from .landmark_features import LandmarkFeatureExtractor
+from .landmark_config import CLASS_NAMES, DATA_DIR
 
 
 class LandmarkDataCollector:

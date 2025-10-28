@@ -24,8 +24,8 @@ class LandmarkFeatureExtractor:
         Returns:
             Angle in degrees (0-180)
         """
-        vector1 = np.array([p1 - p2, p1 - p2])
-        vector2 = np.array([p3 - p2, p3 - p2])
+        vector1 = np.array([p1[0] - p2[0], p1[1] - p2[1]])
+        vector2 = np.array([p3[0] - p2[0], p3[1] - p2[1]])
         
         dot = np.dot(vector1, vector2)
         mag1 = np.linalg.norm(vector1)
@@ -41,7 +41,7 @@ class LandmarkFeatureExtractor:
     @staticmethod
     def distance(p1, p2):
         """Euclidean distance between two points"""
-        return math.sqrt((p1 - p2)**2 + (p1 - p2)**2)
+        return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
     
     @staticmethod
     def extract_features(landmarks_dict):
@@ -96,33 +96,31 @@ class LandmarkFeatureExtractor:
             arms_distance = LandmarkFeatureExtractor.distance(l_wrist, r_wrist)
             
             # Feature 6: Average wrist height (arms up/down)
-            avg_wrist_height = (l_wrist + r_wrist) / 2
-            
+            avg_wrist_height = (l_wrist[1] + r_wrist[1]) / 2
+
             # Feature 7-8: Individual wrist heights relative to hip
-            left_wrist_height = l_wrist - hip
-            right_wrist_height = r_wrist - hip
-            
+            left_wrist_height = l_wrist[1] - hip[1]  # y-coordinate difference
+            right_wrist_height = r_wrist[1] - hip[1]
+
             # Feature 9-10: Wrist distance from center
-            center_x = (l_shoulder + r_shoulder) / 2
-            left_wrist_center_dist = abs(l_wrist - center_x)
-            right_wrist_center_dist = abs(r_wrist - center_x)
-            
+            center_x = (l_shoulder[0] + r_shoulder[0]) / 2
+            left_wrist_center_dist = abs(l_wrist[0] - center_x)  # x-coordinate difference
+            right_wrist_center_dist = abs(r_wrist[0] - center_x) 
+
             # Feature 11: Shoulder width (body size normalization)
             shoulder_width = LandmarkFeatureExtractor.distance(
                 l_shoulder, r_shoulder
             )
             
             # Feature 12: Arms crossed (wrists crossed over)
-            arms_crossed = 1.0 if (l_wrist > r_shoulder and 
-                                   r_wrist < l_shoulder) else 0.0
-            
+            arms_crossed = 1.0 if (l_wrist[0] > r_shoulder[0] and r_wrist[0] < l_shoulder[0]) else 0.0
+
             # Feature 13: Arms horizontal spread
-            arms_spread = abs(l_wrist - r_wrist)
-            
+            arms_spread = abs(l_wrist[0] - r_wrist[0])
+
             # Feature 14: Arms vertical (both up)
-            arms_up = 1.0 if (l_wrist < l_shoulder and 
-                             r_wrist < r_shoulder) else 0.0
-            
+            arms_up = 1.0 if (l_wrist[1] < l_shoulder[1] and r_wrist[1] < r_shoulder[1]) else 0.0 
+
             # Feature 15-16: Individual arm extension
             left_arm_extended = 1.0 if left_elbow_angle > 150 else 0.0
             right_arm_extended = 1.0 if right_elbow_angle > 150 else 0.0

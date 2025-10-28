@@ -9,10 +9,10 @@ from torch.cuda.amp import autocast, GradScaler
 import os
 from tqdm import tqdm
 
-from landmark_model import LandmarkMLP, get_optimizer
-from landmark_dataset import create_data_loaders
-from metrics import MetricsCalculator, evaluate_model
-from landmark_config import *
+from .landmark_model import LandmarkMLP, get_optimizer
+from .landmark_dataset import create_data_loaders
+from .metrics import MetricsCalculator, evaluate_model
+from .landmark_config import *
 
 
 class LandmarkTrainer:

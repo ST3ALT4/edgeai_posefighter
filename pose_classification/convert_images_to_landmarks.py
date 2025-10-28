@@ -9,9 +9,8 @@ import os
 from tqdm import tqdm
 import mediapipe as mp
 
-from landmark_features import LandmarkFeatureExtractor
-from landmark_config import CLASS_NAMES
-
+from .landmark_features import LandmarkFeatureExtractor
+from .landmark_config import CLASS_NAMES
 
 class ImageToLandmarkConverter:
     """
@@ -70,28 +69,28 @@ class ImageToLandmarkConverter:
         landmarks = results.pose_landmarks.landmark
         
         # Extract same format as T1 pose detector
-        left_hip = landmarks
-        right_hip = landmarks
+        left_hip = landmarks[23] 
+        right_hip = landmarks[24]
         hip_x = (left_hip.x + right_hip.x) / 2
         hip_y = (left_hip.y + right_hip.y) / 2
         
         landmarks_dict = {
             'hip_x': float(hip_x),
             'hip_y': float(hip_y),
-            'left_shoulder_x': float(landmarks.x),
-            'left_shoulder_y': float(landmarks.y),
-            'right_shoulder_x': float(landmarks.x),
-            'right_shoulder_y': float(landmarks.y),
-            'left_elbow_x': float(landmarks.x),
-            'left_elbow_y': float(landmarks.y),
-            'right_elbow_x': float(landmarks.x),
-            'right_elbow_y': float(landmarks.y),
-            'left_wrist_x': float(landmarks.x),
-            'left_wrist_y': float(landmarks.y),
-            'right_wrist_x': float(landmarks.x),
-            'right_wrist_y': float(landmarks.y),
-            'left_knee_y': float(landmarks.y),
-            'right_knee_y': float(landmarks.y),
+            'left_shoulder_x': float(landmarks[11].x),
+            'left_shoulder_y': float(landmarks[11].y),
+            'right_shoulder_x': float(landmarks[12].x),
+            'right_shoulder_y': float(landmarks[12].y),
+            'left_elbow_x': float(landmarks[13].x),
+            'left_elbow_y': float(landmarks[13].y),
+            'right_elbow_x': float(landmarks[14].x),
+            'right_elbow_y': float(landmarks[14].y),
+            'left_wrist_x': float(landmarks[15].x),
+            'left_wrist_y': float(landmarks[15].y),
+            'right_wrist_x': float(landmarks[16].x),
+            'right_wrist_y': float(landmarks[16].y),
+            'left_knee_y': float(landmarks[25].y),
+            'right_knee_y': float(landmarks[26].y),
         }
         
         return landmarks_dict
@@ -135,9 +134,13 @@ class ImageToLandmarkConverter:
                 fail_count += 1
                 continue
             
+            # --- START FIX ---
             # Save as .npy file
-            npy_filename = os.path.splitext(img_file) + '.npy'
+            base_filename = os.path.splitext(img_file)[0]
+            npy_filename = base_filename + '.npy'
             npy_path = os.path.join(output_dir, npy_filename)
+            # --- END FIX ---
+            
             np.save(npy_path, features)
             
             success_count += 1
@@ -145,7 +148,7 @@ class ImageToLandmarkConverter:
         print(f"  ✓ Success: {success_count}/{len(image_files)}")
         if fail_count > 0:
             print(f"  ⚠️ Failed: {fail_count}/{len(image_files)}")
-    
+
     def convert_all_classes(self):
         """Convert all classes"""
         print("\n" + "=" * 60)
@@ -195,7 +198,7 @@ def main():
     parser.add_argument(
         '--input-dir', 
         type=str, 
-        default='data/pose_dataset_3class',
+        default='data/',
         help='Directory with JPEG images'
     )
     parser.add_argument(

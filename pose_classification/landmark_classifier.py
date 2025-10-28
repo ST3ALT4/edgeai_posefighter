@@ -7,9 +7,9 @@ import torch
 import torch.nn.functional as F
 from collections import deque
 
-from landmark_model import LandmarkMLP
-from landmark_features import LandmarkFeatureExtractor
-from landmark_config import *
+from .landmark_model import LandmarkMLP
+from .landmark_features import LandmarkFeatureExtractor
+from .landmark_config import *
 
 
 class LandmarkClassifier:

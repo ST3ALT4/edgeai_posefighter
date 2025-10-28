@@ -11,7 +11,7 @@ from sklearn.metrics import (
 )
 import matplotlib.pyplot as plt
 import seaborn as sns
-from landmark_config import CLASS_NAMES
+from .landmark_config import CLASS_NAMES
 
 
 class MetricsCalculator:
