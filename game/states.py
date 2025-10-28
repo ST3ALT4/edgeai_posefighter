@@ -87,7 +87,7 @@ class BattleState(State):
     def enter(self):
         """Initialize battle"""
         print("Entering Battle State")
-        
+    
         # Create players (T2.4)
         self.player1 = Player(
             player_id=1,
@@ -95,23 +95,24 @@ class BattleState(State):
             y=PLAYER_START_Y,
             color=PLAYER_1_COLOR
         )
-        
+    
         self.player2 = Player(
             player_id=2,
             x=PLAYER_2_START_X,
             y=PLAYER_START_Y,
             color=PLAYER_2_COLOR
         )
-        
+    
         # Create HUD (T2.3)
         self.hud = HUD(self.player1, self.player2)
-        
-        # Initialize pose receiver (T2.4)
-        self.pose_receiver = PoseReceiver()
-        
+    
+        # Initialize pose receiver with game's pose queue (T2.4)
+        self.pose_receiver = PoseReceiver(self.game.pose_queue)
+        self.pose_receiver.start()
+    
         # Initialize attack system (T2.5, T2.6)
         self.attack_system = AttackSystem()
-        
+
     def exit(self):
         """Cleanup battle resources"""
         if self.pose_receiver:

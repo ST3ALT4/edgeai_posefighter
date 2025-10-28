@@ -1,17 +1,22 @@
 """
-game_engine.py - Main game engine with game loop and state management
-Tasks: T2.1, T2.2
+game_engine.py - UPDATED to accept pose queue
 """
 
 import pygame
 from config import *
 from game.states import MenuState, BattleState, GameOverState
 
+
 class GameEngine:
     """Main game engine that manages the game loop and state transitions"""
     
-    def __init__(self):
-        """Initialize the game engine"""
+    def __init__(self, pose_queue=None):
+        """
+        Initialize the game engine
+        
+        Args:
+            pose_queue: Multiprocessing Queue from T1 (optional)
+        """
         # Setup display (T2.1)
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption(GAME_TITLE)
@@ -19,6 +24,9 @@ class GameEngine:
         # Frame rate control (T2.1)
         self.clock = pygame.time.Clock()
         self.fps = FPS
+        
+        # Store pose queue
+        self.pose_queue = pose_queue
         
         # Game state management (T2.2)
         self.current_state = None
@@ -35,12 +43,7 @@ class GameEngine:
         self.running = True
         
     def change_state(self, state_name):
-        """
-        Change the current game state
-        
-        Args:
-            state_name: Name of the state to change to (from config)
-        """
+        """Change the current game state"""
         if self.current_state:
             self.current_state.exit()
             
@@ -61,12 +64,7 @@ class GameEngine:
                 self.current_state.handle_event(event)
     
     def update(self, dt):
-        """
-        Update the current game state
-        
-        Args:
-            dt: Delta time in seconds since last frame
-        """
+        """Update the current game state"""
         if self.current_state:
             self.current_state.update(dt)
     
