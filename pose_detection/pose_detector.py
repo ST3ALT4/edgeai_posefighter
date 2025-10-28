@@ -1,6 +1,7 @@
 """
 pose_detector.py - Multi-person pose detection using YOLO + MediaPipe
 Team Member 1 Implementation
+UPDATED: Now sends cropped frames for ML classification
 """
 
 import cv2
@@ -147,7 +148,7 @@ class PoseDetectionSystem:
         left_elbow = landmarks
         right_elbow = landmarks
         
-        # Knees for ground pound
+        # Knees
         left_knee = landmarks
         right_knee = landmarks
         
@@ -169,6 +170,37 @@ class PoseDetectionSystem:
             'left_knee_y': float(left_knee.y),
             'right_knee_y': float(right_knee.y),
         }
+    
+    def _crop_player(self, frame, bbox):
+        """
+        Crop player region from frame for ML classification
+        
+        Args:
+            frame: Full frame
+            bbox: Bounding box [x1, y1, x2, y2]
+        
+        Returns:
+            Cropped frame or None
+        """
+        if bbox is None:
+            return None
+        
+        x1, y1, x2, y2 = map(int, bbox)
+        
+        # Add padding
+        padding = 20
+        x1 = max(0, x1 - padding)
+        y1 = max(0, y1 - padding)
+        x2 = min(frame.shape, x2 + padding)
+        y2 = min(frame.shape, y2 + padding)
+        
+        # Crop
+        crop = frame[y1:y2, x1:x2]
+        
+        if crop.size == 0:
+            return None
+        
+        return crop
     
     def run(self):
         """
@@ -209,10 +241,16 @@ class PoseDetectionSystem:
             player1_data = self.extract_landmarks(frame, p1_bbox)
             player2_data = self.extract_landmarks(frame, p2_bbox)
             
-            # Send data to game
+            # Extract cropped player frames for ML classification
+            player1_crop = self._crop_player(frame, p1_bbox)
+            player2_crop = self._crop_player(frame, p2_bbox)
+            
+            # Send data to game with cropped frames
             pose_data = {
                 'player1': player1_data,
-                'player2': player2_data
+                'player2': player2_data,
+                'player1_frame': player1_crop,  # For ML classification
+                'player2_frame': player2_crop   # For ML classification
             }
             
             try:
@@ -228,7 +266,7 @@ class PoseDetectionSystem:
                 if p1_bbox is not None:
                     x1, y1, x2, y2 = map(int, p1_bbox)
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
-                    cv2.putText(frame, "P1", (x1, y1-10), 
+                    cv2.putText(frame, "P1", (x1, y1-10),
                               cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
                 
                 if p2_bbox is not None:

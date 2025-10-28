@@ -147,138 +147,6 @@ class LightningStrike(Attack):
         screen.blit(flash_surf, (self.x - self.width, 0))
 
 
-class GroundPound(Attack):
-    """Ground pound area of effect attack"""
-    
-    def __init__(self, attacker):
-        super().__init__(attacker, "ground_pound")
-        
-        self.x = attacker.x
-        self.y = attacker.y
-        
-        # Expanding circle effect
-        self.radius = 20
-        self.max_radius = GROUND_POUND_RADIUS
-        self.expansion_speed = 8
-        
-        self.color = GROUND_POUND_COLOR
-        
-        # Hitbox
-        self.hitbox = AttackHitbox(
-            self.x - self.radius,
-            self.y - self.radius,
-            self.radius * 2,
-            self.radius * 2,
-            GROUND_POUND_DAMAGE
-        )
-        self.has_hit = False
-        
-    def update(self, dt):
-        """Update ground pound expansion"""
-        self.radius += self.expansion_speed
-        
-        # Update hitbox
-        self.hitbox = AttackHitbox(
-            self.x - self.radius,
-            self.y - self.radius,
-            self.radius * 2,
-            self.radius * 2,
-            GROUND_POUND_DAMAGE
-        )
-        
-        if self.radius >= self.max_radius:
-            self.alive = False
-    
-    def check_hit(self, target):
-        """Check collision with target (only hits once)"""
-        if self.has_hit:
-            return False
-        
-        if self.hitbox.check_collision(target.hitbox):
-            self.has_hit = True
-            return True
-        return False
-    
-    def render(self, screen):
-        """Render ground pound shockwave"""
-        alpha = int(255 * (1 - self.radius / self.max_radius))
-        
-        # Draw expanding ring
-        if self.radius > 5:
-            pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), 
-                             int(self.radius), 5)
-        
-        # Inner filled circle with transparency
-        surf = pygame.Surface((self.radius * 2, self.radius * 2), pygame.SRCALPHA)
-        pygame.draw.circle(surf, (*self.color, alpha // 2), 
-                          (self.radius, self.radius), self.radius)
-        screen.blit(surf, (int(self.x - self.radius), int(self.y - self.radius)))
-
-
-class EnergyBeam(Attack):
-    """Energy beam projectile"""
-    
-    def __init__(self, attacker):
-        super().__init__(attacker, "energy_beam")
-        
-        self.x = attacker.x
-        self.y = attacker.y
-        
-        self.direction = 1 if attacker.player_id == 1 else -1
-        self.speed = ENERGY_BEAM_SPEED
-        
-        # Beam properties
-        self.length = ENERGY_BEAM_LENGTH
-        self.width = ENERGY_BEAM_WIDTH
-        self.color = ENERGY_BEAM_COLOR
-        
-        # Hitbox
-        self.hitbox = AttackHitbox(
-            self.x, self.y - self.width // 2,
-            self.length, self.width,
-            ENERGY_BEAM_DAMAGE
-        )
-        
-    def update(self, dt):
-        """Update beam position"""
-        self.x += self.direction * self.speed
-        
-        # Update hitbox position
-        if self.direction > 0:
-            self.hitbox.update_position(self.x, self.y)
-        else:
-            self.hitbox.update_position(self.x - self.length, self.y)
-        
-        # Remove if off screen
-        if self.x < -self.length or self.x > SCREEN_WIDTH + self.length:
-            self.alive = False
-    
-    def check_hit(self, target):
-        """Check collision with target"""
-        return self.hitbox.check_collision(target.hitbox)
-    
-    def render(self, screen):
-        """Render energy beam"""
-        if self.direction > 0:
-            start_x = self.x
-            end_x = self.x + self.length
-        else:
-            start_x = self.x - self.length
-            end_x = self.x
-        
-        # Main beam
-        pygame.draw.line(screen, self.color, 
-                        (start_x, self.y), (end_x, self.y), self.width)
-        
-        # Glow effect
-        glow_width = self.width + 10
-        glow_surf = pygame.Surface((abs(end_x - start_x), glow_width), pygame.SRCALPHA)
-        pygame.draw.line(glow_surf, (*self.color, 128),
-                        (0, glow_width // 2), (abs(end_x - start_x), glow_width // 2),
-                        glow_width)
-        screen.blit(glow_surf, (min(start_x, end_x), self.y - glow_width // 2))
-
-
 class AttackSystem:
     """Manages all active attacks (T2.5, T2.6)"""
     
@@ -311,14 +179,6 @@ class AttackSystem:
         elif move_name == "shield":
             player.activate_shield()
             
-        elif move_name == "ground_pound":
-            attack = GroundPound(player)
-            self.active_attacks.append(attack)
-            
-        elif move_name == "energy_beam":
-            attack = EnergyBeam(player)
-            self.active_attacks.append(attack)
-        
         # Spawn particle effect
         self._spawn_particles(player.x, player.y, move_name)
     
@@ -335,8 +195,6 @@ class AttackSystem:
             "fireball": FIREBALL_COLOR,
             "lightning": LIGHTNING_COLOR,
             "shield": SHIELD_COLOR,
-            "ground_pound": GROUND_POUND_COLOR,
-            "energy_beam": ENERGY_BEAM_COLOR
         }
         
         color = color_map.get(attack_type, WHITE)

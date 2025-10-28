@@ -55,16 +55,6 @@ SHIELD_REDUCTION = 0.5  # Damage reduction factor
 SHIELD_COLOR = BLUE
 SHIELD_ALPHA = 128
 
-GROUND_POUND_DAMAGE = 20
-GROUND_POUND_RADIUS = 150
-GROUND_POUND_COLOR = PURPLE
-
-ENERGY_BEAM_DAMAGE = 18
-ENERGY_BEAM_SPEED = 10
-ENERGY_BEAM_LENGTH = 100
-ENERGY_BEAM_WIDTH = 15
-ENERGY_BEAM_COLOR = GREEN
-
 # Particle settings
 PARTICLE_LIFETIME = 30  # frames
 PARTICLE_SPEED_MIN = 2
@@ -75,13 +65,10 @@ PARTICLES_PER_EFFECT = 20
 
 # Superpower names (must match T3's classification output)
 SUPERPOWERS = {
-    "fireball": {"damage": FIREBALL_DAMAGE, "name": "Fireball"},
-    "lightning": {"damage": LIGHTNING_DAMAGE, "name": "Lightning Strike"},
-    "shield": {"damage": 0, "name": "Force Shield"},
-    "ground_pound": {"damage": GROUND_POUND_DAMAGE, "name": "Ground Pound"},
-    "energy_beam": {"damage": ENERGY_BEAM_DAMAGE, "name": "Energy Beam"},
+    "block": {"damage": 0, "name": "Block"},  # Defensive
+    "fireball": {"damage": FIREBALL_DAMAGE, "name": "Fireball"},  # Attack
+    "lightning": {"damage": LIGHTNING_DAMAGE, "name": "Lightning Strike"},  # Attack
 }
-
 # Communication settings (for receiving data from T1 and T3)
 POSE_QUEUE_MAX_SIZE = 10
 PREDICTION_QUEUE_MAX_SIZE = 5
