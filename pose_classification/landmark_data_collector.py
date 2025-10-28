@@ -1,29 +1,30 @@
 """
-data_collector.py - Collect Training Data from Webcam
-SYLLABUS COVERAGE: Custom Dataset Creation
+landmark_data_collector.py - Collect landmark data (not images!)
+Much faster and more general than image-based approach
 """
 
 import cv2
+import numpy as np
 import os
 from datetime import datetime
-import numpy as np
-from config import CLASS_NAMES
+from multiprocessing import Queue
+
+from pose_detection.pose_detector import PoseDetectionSystem
+from landmark_features import LandmarkFeatureExtractor
+from landmark_config import CLASS_NAMES, DATA_DIR
 
 
-class DataCollector:
+class LandmarkDataCollector:
     """
-    Interactive data collection tool
-    Collects images from webcam for each pose class
+    Collect pose landmark features for training
+    Saves numpy arrays instead of images - much faster!
     """
     
-    def __init__(self, data_dir='data/pose_dataset'):
-        """
-        Args:
-            data_dir: Directory to save collected data
-        """
+    def __init__(self, data_dir=DATA_DIR):
         self.data_dir = data_dir
+        self.feature_extractor = LandmarkFeatureExtractor()
         self.create_directories()
-        
+    
     def create_directories(self):
         """Create directories for each class"""
         for class_name in CLASS_NAMES:
@@ -31,14 +32,13 @@ class DataCollector:
             os.makedirs(class_dir, exist_ok=True)
         print(f"✓ Created directories in {self.data_dir}")
     
-    def collect_class_samples(self, class_name, num_samples=50, countdown=3):
+    def collect_class_samples(self, class_name, num_samples=50):
         """
-        Collect samples for one class
+        Collect landmark samples for one class
         
         Args:
-            class_name: Name of the pose class
+            class_name: Name of pose class
             num_samples: Number of samples to collect
-            countdown: Countdown seconds before starting
         """
         if class_name not in CLASS_NAMES:
             print(f"Error: Unknown class '{class_name}'")
@@ -48,22 +48,27 @@ class DataCollector:
         
         # Check existing samples
         existing = len([f for f in os.listdir(class_dir) 
-                       if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+                       if f.endswith('.npy')])
         
         print("\n" + "=" * 60)
-        print(f"COLLECTING DATA FOR: {class_name.upper()}")
+        print(f"COLLECTING LANDMARK DATA: {class_name.upper()}")
         print("=" * 60)
-        print(f"Target samples: {num_samples}")
-        print(f"Existing samples: {existing}")
+        print(f"Target: {num_samples} samples")
+        print(f"Existing: {existing}")
         print(f"\nInstructions:")
-        print(f"  1. Position yourself to perform '{class_name}' pose")
-        print(f"  2. Press SPACE to capture a sample")
-        print(f"  3. Hold the pose and vary slightly for diversity")
-        print(f"  4. Press 'Q' to quit early")
+        print(f"  1. Perform '{class_name}' pose")
+        print(f"  2. Press SPACE to capture")
+        print(f"  3. Hold pose and vary slightly")
+        print(f"  4. Press 'Q' to quit")
         print("=" * 60)
         
         input("\nPress ENTER to start...")
         
+        # Initialize pose detection
+        pose_queue = Queue(maxsize=10)
+        detector = PoseDetectionSystem(pose_queue)
+        
+        # Open webcam
         cap = cv2.VideoCapture(0)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -75,74 +80,86 @@ class DataCollector:
         count = existing
         target = existing + num_samples
         
+        print("\nWebcam opened. Start performing the pose!")
+        
         while count < target:
             ret, frame = cap.read()
             if not ret:
                 break
             
-            # Display info
+            # Detect players and extract landmarks
+            p1_bbox, p2_bbox = detector.detect_players(frame)
+            landmarks = detector.extract_landmarks(frame, p1_bbox)
+            
+            # Display
             display = frame.copy()
             
             # Progress bar
             progress = (count / target) * 100
-            cv2.rectangle(display, (10, 10), (10 + int(progress * 6), 40), 
+            cv2.rectangle(display, (10, 10), (10 + int(progress * 6), 40),
                          (0, 255, 0), -1)
             cv2.rectangle(display, (10, 10), (610, 40), (255, 255, 255), 2)
             
-            # Text info
-            info_text = [
+            # Info text
+            info = [
                 f"Class: {class_name.upper()}",
                 f"Samples: {count}/{target}",
-                f"Progress: {progress:.1f}%",
+                f"Landmarks: {'YES' if landmarks else 'NO'}",
                 "",
-                "SPACE: Capture",
-                "Q: Quit"
+                "SPACE: Capture | Q: Quit"
             ]
             
-            y_offset = 70
-            for i, text in enumerate(info_text):
+            for i, text in enumerate(info):
                 color = (0, 255, 0) if i < 3 else (255, 255, 255)
-                cv2.putText(display, text, (10, y_offset + i * 30),
+                cv2.putText(display, text, (10, 70 + i * 30),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
             
-            cv2.imshow('Data Collection', display)
+            # Draw bbox if detected
+            if p1_bbox is not None:
+                x1, y1, x2, y2 = map(int, p1_bbox)
+                cv2.rectangle(display, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(display, "Detected", (x1, y1-10),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+            
+            cv2.imshow('Landmark Collection', display)
             
             key = cv2.waitKey(1) & 0xFF
             
-            if key == ord(' '):  # Space to capture
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                filename = f"{class_name}_{timestamp}.jpg"
-                filepath = os.path.join(class_dir, filename)
+            if key == ord(' ') and landmarks is not None:
+                # Extract features
+                features = self.feature_extractor.extract_features(landmarks)
                 
-                cv2.imwrite(filepath, frame)
-                count += 1
-                print(f"✓ Captured {count}/{target}: {filename}")
-                
-                # Brief flash effect
-                white = np.ones_like(frame) * 255
-                cv2.imshow('Data Collection', white)
-                cv2.waitKey(100)
-                
-            elif key == ord('q'):  # Q to quit
+                if features is not None:
+                    # Save as numpy file
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                    filename = f"{class_name}_{timestamp}.npy"
+                    filepath = os.path.join(class_dir, filename)
+                    
+                    np.save(filepath, features)
+                    count += 1
+                    print(f"✓ Saved {count}/{target}: {filename}")
+                    
+                    # Flash effect
+                    white = np.ones_like(frame) * 255
+                    cv2.imshow('Landmark Collection', white)
+                    cv2.waitKey(100)
+                else:
+                    print("❌ Failed to extract features")
+            
+            elif key == ord('q'):
                 break
         
         cap.release()
         cv2.destroyAllWindows()
         
-        final_count = len([f for f in os.listdir(class_dir) 
-                          if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+        final_count = len([f for f in os.listdir(class_dir) if f.endswith('.npy')])
         print(f"\n✓ Collection complete for '{class_name}'")
         print(f"  Total samples: {final_count}")
     
     def collect_all_classes(self, samples_per_class=50):
-        """
-        Collect samples for all classes
-        
-        Args:
-            samples_per_class: Number of samples per class
-        """
+        """Collect samples for all classes"""
         print("\n" + "=" * 60)
-        print("POSE DATASET COLLECTION")
+        print("LANDMARK DATA COLLECTION")
         print("=" * 60)
         print(f"Classes: {', '.join(CLASS_NAMES)}")
         print(f"Samples per class: {samples_per_class}")
@@ -167,28 +184,25 @@ class DataCollector:
         total = 0
         for class_name in CLASS_NAMES:
             class_dir = os.path.join(self.data_dir, class_name)
-            count = len([f for f in os.listdir(class_dir) 
-                        if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+            count = len([f for f in os.listdir(class_dir) if f.endswith('.npy')])
             print(f"  {class_name}: {count} samples")
             total += count
         print(f"\nTotal: {total} samples")
 
 
-# Standalone script
+# Command-line interface
 if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser(description='Collect pose training data')
+    parser = argparse.ArgumentParser(description='Collect landmark data')
     parser.add_argument('--class', dest='class_name', type=str,
-                       help='Class name to collect (or "all" for all classes)')
+                       help='Class name or "all"')
     parser.add_argument('--samples', type=int, default=50,
-                       help='Number of samples per class (default: 50)')
-    parser.add_argument('--data-dir', type=str, default='data/pose_dataset',
-                       help='Directory to save data')
+                       help='Number of samples per class')
     
     args = parser.parse_args()
     
-    collector = DataCollector(data_dir=args.data_dir)
+    collector = LandmarkDataCollector()
     
     if args.class_name == 'all' or args.class_name is None:
         collector.collect_all_classes(samples_per_class=args.samples)
